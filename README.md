@@ -1,6 +1,6 @@
 # Arbitration Agreement Builder
 
-Herramienta web que arma una cláusula de arbitraje a partir de un cuestionario con lógica condicional. La construí durante una pasantía en 2026. El código, la especificación y los textos de las cláusulas pertenecen a quien encargó el proyecto, así que este repositorio describe el trabajo sin publicarlo.
+Herramienta web que arma una cláusula de arbitraje a partir de un cuestionario con lógica condicional. La construí durante una pasantía, entre julio y agosto de 2026; este repositorio se publicó el 1 de noviembre de 2026. El código, la especificación y los textos de las cláusulas pertenecen a quien encargó el proyecto, así que este repositorio describe el trabajo sin publicarlo.
 
 ## El problema
 
