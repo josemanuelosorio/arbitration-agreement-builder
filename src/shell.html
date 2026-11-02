@@ -1,0 +1,303 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Arbitration Agreement Builder · working prototype v0.4</title>
+<style>
+  /* ============================================================
+     Arbitration Agreement Builder, working prototype v0.1
+     Visual language: legal working paper / galley proof, on
+     purpose. Serif for substance, monospace for metadata, one
+     annotation color for proof marks. This is NOT the site
+     design; the design pass runs separately against the Figma
+     exports. It should read as a drafting instrument, not as a
+     product mockup.
+     ============================================================ */
+  :root {
+    --paper: #f2efe6;        /* warm working paper */
+    --sheet: #fbfaf4;        /* the clause sheet, slightly brighter */
+    --ink: #1d1a15;
+    --ink-soft: #5c564b;
+    --rule: rgba(29, 26, 21, .18);
+    --rule-strong: rgba(29, 26, 21, .55);
+    --mark: #a03123;         /* proofreader vermilion, the one accent */
+    --mark-soft: #f3e2de;
+    /* epistemic status colors, used as ink not as pills */
+    --st-icc: #2c6e49;
+    --st-wire: #274c77;
+    --st-para: #8a5a10;
+    --st-assum: #a05b23;
+    --st-tbd: #a03123;
+    --serif: Georgia, "Times New Roman", "Nimbus Roman", serif;
+    --mono: "SF Mono", Menlo, Consolas, "Liberation Mono", monospace;
+    --sans: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+  }
+  * { box-sizing: border-box; }
+  html, body { margin: 0; padding: 0; }
+  body {
+    background: var(--paper);
+    color: var(--ink);
+    font-family: var(--sans);
+    font-size: 15.5px;
+    line-height: 1.55;
+  }
+  a { color: var(--ink); }
+
+  /* ---------- document header ---------- */
+  header.site {
+    position: sticky; top: 0; z-index: 40;
+    background: var(--paper);
+    border-bottom: 3px double var(--rule-strong);
+    padding: 12px 26px 10px;
+    display: flex; align-items: baseline; gap: 18px; flex-wrap: wrap;
+  }
+  .wordmark { font-family: var(--serif); font-size: 17px; letter-spacing: .12em; font-weight: 700; }
+  .wordmark small {
+    display: block; font-family: var(--mono); font-weight: 400;
+    font-size: 10.5px; letter-spacing: 0; color: var(--ink-soft); margin-top: 2px;
+  }
+  header .spacer { flex: 1; }
+  .stamp { font-family: var(--mono); font-size: 10.5px; color: var(--ink-soft); text-align: right; line-height: 1.5; }
+  .hdr-ctl { display: flex; align-items: center; gap: 8px; font-family: var(--mono); font-size: 11px; color: var(--ink-soft); }
+  .seg { display: inline-flex; border: 1px solid var(--rule-strong); border-radius: 2px; overflow: hidden; }
+  .seg button {
+    border: 0; background: transparent; padding: 4px 10px; cursor: pointer;
+    font-family: var(--mono); font-size: 11px; color: var(--ink-soft);
+  }
+  .seg button.on { background: var(--ink); color: var(--paper); }
+  .toggle { display: inline-flex; align-items: center; gap: 6px; cursor: pointer; user-select: none; }
+  .toggle input { accent-color: var(--mark); width: 14px; height: 14px; cursor: pointer; }
+
+  .proto-note {
+    font-family: var(--mono); font-size: 11px; color: var(--ink-soft);
+    border-bottom: 1px solid var(--rule);
+    padding: 7px 26px; background: var(--paper);
+  }
+  .proto-note strong { color: var(--ink); font-weight: 600; }
+  .de-banner {
+    font-family: var(--mono); font-size: 11px; color: var(--mark);
+    border-bottom: 1px solid var(--rule);
+    padding: 7px 26px; display: none; background: var(--mark-soft);
+  }
+
+  /* ---------- layout ---------- */
+  main { max-width: 1150px; margin: 0 auto; padding: 34px 26px 80px; }
+  .screen { display: none; }
+  .screen.on { display: block; }
+  .kicker { font-family: var(--mono); font-size: 11px; color: var(--ink-soft); margin: 0 0 8px; }
+  h1 { font-family: var(--serif); font-weight: 700; font-size: 34px; line-height: 1.12; margin: 0 0 16px; }
+  h2 {
+    font-family: var(--serif); font-size: 20px; margin: 34px 0 12px;
+    padding-top: 10px; border-top: 1px solid var(--rule-strong);
+  }
+  .crumb { font-family: var(--mono); font-size: 11px; color: var(--ink-soft); margin-bottom: 26px; }
+
+  .grid2 { display: grid; grid-template-columns: minmax(0,1fr) 440px; gap: 34px; align-items: start; }
+  @media (max-width: 960px) { .grid2 { grid-template-columns: 1fr; } .panel-col { position: static !important; } }
+  .panel-col { position: sticky; top: 96px; }
+
+  .card { border-top: 1px solid var(--rule-strong); padding: 18px 0 6px; margin-bottom: 14px; }
+
+  /* ---------- landing ---------- */
+  .steps { display: grid; grid-template-columns: repeat(3, 1fr); gap: 22px; margin-top: 10px; }
+  @media (max-width: 700px) { .steps { grid-template-columns: 1fr; } }
+  .steps .card { padding-top: 12px; }
+  .step-n { font-family: var(--serif); font-size: 30px; color: var(--mark); }
+  .vprops { display: grid; grid-template-columns: repeat(2, 1fr); gap: 0 34px; }
+  @media (max-width: 700px) { .vprops { grid-template-columns: 1fr; } }
+  .vprops .card { border-top-color: var(--rule); }
+  .vprops h3 { margin: 0 0 5px; font-family: var(--serif); font-size: 16.5px; }
+  .vprops p { margin: 0 0 10px; font-size: 13.5px; color: var(--ink-soft); }
+
+  /* ---------- buttons ---------- */
+  .btn {
+    display: inline-block; border-radius: 2px; padding: 10px 22px; font-size: 14px;
+    cursor: pointer; border: 1px solid var(--ink); text-decoration: none;
+    font-family: var(--sans); letter-spacing: .01em; background: transparent; color: var(--ink);
+  }
+  .btn.primary { background: var(--ink); color: var(--paper); }
+  .btn.primary:hover { background: #000; }
+  .btn.ghost:hover { background: rgba(29,26,21,.06); }
+  .btn:disabled { opacity: .4; cursor: not-allowed; }
+  .btnrow { display: flex; gap: 12px; margin-top: 26px; flex-wrap: wrap; }
+  .btnrow .push { flex: 1; }
+
+  /* ---------- flow / questions ---------- */
+  .progress { font-family: var(--mono); font-size: 11px; color: var(--ink-soft); margin-bottom: 10px; }
+  .phasebar { display: flex; gap: 0; margin-bottom: 20px; flex-wrap: wrap; border-bottom: 1px solid var(--rule); }
+  .phase {
+    flex: 1; min-width: 140px; padding: 0 2px 7px;
+    font-family: var(--serif); font-size: 13px; color: var(--ink-soft);
+    border-bottom: 2px solid transparent; margin-bottom: -1px;
+  }
+  .phase .num { font-family: var(--serif); font-style: italic; margin-right: 6px; }
+  .phase.done { color: var(--ink); }
+  .phase.done .num::after { content: " ✓"; color: var(--st-icc); font-style: normal; }
+  .phase.cur { color: var(--ink); font-weight: 700; border-bottom-color: var(--mark); }
+  .topic { display: flex; align-items: center; gap: 8px; font-family: var(--mono); font-size: 11px; color: var(--ink-soft); margin-bottom: 6px; }
+  .info-dot {
+    display: inline-flex; align-items: center; justify-content: center;
+    width: 15px; height: 15px; border: 1px solid var(--rule-strong); border-radius: 2px;
+    font-family: var(--serif); font-style: italic; font-size: 10.5px; color: var(--ink-soft); cursor: help; position: relative;
+  }
+  .info-dot .tip {
+    display: none; position: absolute; bottom: 130%; left: 0;
+    background: var(--ink); color: var(--paper); font-size: 12px; font-family: var(--sans); font-style: normal;
+    padding: 8px 10px; border-radius: 2px; width: 250px; z-index: 30; line-height: 1.4;
+  }
+  .info-dot:hover .tip { display: block; }
+  .qtitle { font-family: var(--serif); font-size: 24px; font-weight: 700; margin: 2px 0 18px; line-height: 1.25; }
+
+  .opt {
+    display: block; width: 100%; text-align: left;
+    background: transparent; border: 1px solid var(--rule);
+    border-left: 3px solid var(--rule);
+    border-radius: 0; padding: 12px 14px; margin-bottom: 8px;
+    font-family: var(--sans); font-size: 14.5px; cursor: pointer; color: var(--ink);
+  }
+  .opt:hover { border-color: var(--ink); border-left-color: var(--ink); }
+  .opt.sel { border-color: var(--ink); border-left: 3px solid var(--mark); background: var(--sheet); font-weight: 600; }
+  .opt.sel::before { content: "■ "; color: var(--mark); font-size: 10px; vertical-align: 2px; }
+  .opt .sub { display: block; font-weight: 400; font-size: 12px; color: var(--ink-soft); margin-top: 3px; }
+  .opt-input {
+    margin: -2px 0 10px 16px; padding: 10px 14px;
+    border-left: 1px solid var(--rule-strong); background: transparent;
+  }
+  .opt-input label { display: block; font-family: var(--mono); font-size: 10.5px; color: var(--ink-soft); margin-bottom: 6px; }
+  .opt-input select, .opt-input input[type=text], .opt-input input[type=number] {
+    font-family: var(--sans); font-size: 14px; padding: 7px 9px;
+    border: 1px solid var(--rule-strong); border-radius: 2px;
+    background: var(--sheet); color: var(--ink); max-width: 100%;
+  }
+  .opt-input .row { display: flex; gap: 8px; flex-wrap: wrap; }
+
+  /* ---------- clause preview panel: the drafted sheet ---------- */
+  .panel { background: var(--sheet); border: 1px solid var(--rule-strong); }
+  .panel-head { padding: 14px 20px 12px; border-bottom: 1px solid var(--rule); }
+  .panel-head .ttl { font-family: var(--mono); font-size: 10px; color: var(--ink-soft); }
+  .panel-head h3 {
+    margin: 4px 0 10px; font-family: var(--serif); font-size: 17px; font-weight: 700;
+    letter-spacing: .04em;
+  }
+  .panel-ctls { display: flex; gap: 14px; flex-wrap: wrap; font-family: var(--mono); font-size: 11px; color: var(--ink-soft); }
+  .panel-ctls select {
+    font-family: var(--mono); font-size: 11px; padding: 3px 5px;
+    border: 1px solid var(--rule-strong); border-radius: 2px; background: var(--sheet);
+  }
+  .clause { padding: 20px 22px; font-family: var(--serif); font-size: 15.5px; line-height: 1.7; }
+  .clause p.frag-p { margin: 0 0 15px; }
+  .clause .frag.changed {
+    text-decoration: underline; text-decoration-color: var(--mark);
+    text-decoration-thickness: 1.5px; text-underline-offset: 4px;
+  }
+  .advisory-box {
+    border: 1px solid var(--rule-strong); border-left: 3px solid var(--st-para);
+    background: rgba(138, 90, 16, .05); color: var(--ink);
+    padding: 10px 14px; font-family: var(--sans); font-size: 13px; margin: 4px 0 12px; line-height: 1.5;
+  }
+  .faq-item { border-top: 1px solid var(--rule); padding: 10px 0; }
+  .faq-item summary { cursor: pointer; font-family: var(--serif); font-size: 15.5px; font-weight: 600; }
+  .faq-item p { margin: 8px 0 4px; color: var(--ink-soft); font-size: 14px; max-width: 700px; }
+  .final-cta { border-top: 3px double var(--rule-strong); margin-top: 40px; padding-top: 20px; }
+  .cta-sub { font-family: var(--mono); font-size: 11px; color: var(--ink-soft); margin-left: 10px; }
+  .mono-ref { font-family: var(--mono); font-size: 10.5px; color: var(--ink-soft); }
+  .clause .empty { color: var(--ink-soft); font-style: italic; }
+  .frag-tbd {
+    border: 1px dashed var(--mark); color: var(--mark);
+    padding: 9px 12px; font-family: var(--mono); font-size: 11.5px; margin: 0 0 13px; line-height: 1.55;
+  }
+  .annotation {
+    border-left: 2px solid var(--rule-strong); color: var(--ink-soft);
+    padding: 2px 0 2px 12px; font-family: var(--mono); font-size: 11px; margin: 0 0 13px; line-height: 1.55;
+  }
+  .panel-foot { border-top: 1px solid var(--rule); padding: 12px 20px; display: flex; gap: 12px; align-items: center; flex-wrap: wrap; }
+  .copied { color: var(--st-icc); font-family: var(--mono); font-size: 11px; display: none; }
+
+  /* ---------- review screen ---------- */
+  table.answers { width: 100%; border-collapse: collapse; font-size: 13.5px; }
+  table.answers td { padding: 8px 10px 8px 0; border-bottom: 1px solid var(--rule); vertical-align: top; }
+  table.answers td.q { color: var(--ink-soft); width: 45%; font-family: var(--mono); font-size: 11.5px; padding-top: 10px; }
+  table.answers a.edit { font-family: var(--mono); font-size: 10.5px; color: var(--mark); margin-left: 8px; }
+  ul.dlist { margin: 6px 0 12px; padding-left: 18px; font-size: 13.5px; }
+  ul.dlist li { margin-bottom: 4px; }
+
+  /* ---------- epistemic marks (review mode): proof marks, not pills ---------- */
+  .chip {
+    display: inline; font-family: var(--mono); font-size: 10.5px; font-weight: 400;
+    margin-left: 7px; white-space: nowrap; cursor: help; letter-spacing: 0;
+    border-bottom: 1px dotted currentColor;
+  }
+  .chip::before { content: "["; } .chip::after { content: "]"; }
+  .chip.icc  { color: var(--st-icc); }
+  .chip.wire { color: var(--st-wire); }
+  .chip.para { color: var(--st-para); }
+  .chip.assum{ color: var(--st-assum); }
+  .chip.tbd  { color: var(--st-tbd); }
+  .chip.sign { color: var(--mark); font-weight: 700; }
+  body:not(.review) .chip, body:not(.review) .rv { display: none !important; }
+  .rv-note {
+    font-family: var(--mono); font-size: 11px; color: var(--ink-soft);
+    border-left: 2px solid var(--mark); padding: 3px 0 3px 12px; margin-top: 12px; line-height: 1.55;
+  }
+  .rv-note code { font-family: var(--mono); color: var(--ink); }
+
+  .legend { margin-top: 8px; line-height: 2; }
+  .legend .chip { margin-left: 0; margin-right: 12px; }
+  details.openitems { margin-top: 12px; font-size: 13px; }
+  details.openitems summary { cursor: pointer; color: var(--mark); font-family: var(--mono); font-size: 11.5px; }
+  details.openitems ol { padding-left: 20px; }
+  details.openitems li { margin-bottom: 5px; }
+
+  footer.site {
+    max-width: 1150px; margin: 0 auto; padding: 16px 26px 46px;
+    font-family: var(--mono); font-size: 10.5px; color: var(--ink-soft);
+    border-top: 3px double var(--rule-strong); line-height: 1.6;
+  }
+  .faq-tbd { border: 1px dashed var(--rule-strong); padding: 12px 16px; color: var(--ink-soft); font-family: var(--mono); font-size: 11.5px; }
+    /* §7.3 explanations: expandable section under the question title.
+       The spec leaves the mechanism open; this is the prototype's form. */
+    details.explain { margin: 10px 0 2px; border-top: 1px solid rgba(0,0,0,.16); padding-top: 8px; }
+    details.explain summary { cursor: pointer; font-size: 13px; opacity: .85; }
+    details.explain summary::marker { content: '+ '; }
+    details.explain[open] summary::marker { content: '- '; }
+    details.explain p { margin: 8px 0 2px; font-size: 14px; line-height: 1.55; max-width: 62ch; }
+  </style>
+</head>
+<body>
+
+<header class="site">
+  <div class="wordmark">AGREEMENT BUILDER
+    <small id="wordmark_sub">Arbitration Agreement Builder · working prototype</small>
+  </div>
+  <div class="spacer"></div>
+  <div class="stamp" id="stamp"></div>
+  <div class="hdr-ctl">
+    <span title="Site interface language. Independent from the clause output language (two different dimensions).">ui</span>
+    <span class="seg" id="ui_lang_seg">
+      <button data-lang="en" class="on">Eng</button><button data-lang="de">Ger</button>
+    </span>
+  </div>
+  <div class="hdr-ctl">
+    <label class="toggle" title="Shows the epistemic status of every text: what is verbatim ICC, what comes from the wireframes, what is an assumption and what is still TBD.">
+      <input type="checkbox" id="review_toggle"> review mode
+    </label>
+  </div>
+</header>
+
+<div class="proto-note" id="proto_note">
+  working prototype v0.4 · internal review only · implements the Consolidated Specification of 30.07, the owner decisions of 31.07 and the §8 item 3 help texts of 04.08 · generic engine over <strong>content/builder_content_model.json</strong> (embedded, single source of truth: edit the model, not the code; spec §1.3.3) · visual design intentionally provisional, the design pass runs separately
+</div>
+<div class="de-banner" id="de_banner"></div>
+
+<main id="app">
+  <section class="screen on" id="scr_landing"></section>
+  <section class="screen" id="scr_entry"></section>
+  <section class="screen" id="scr_flow"></section>
+  <section class="screen" id="scr_review"></section>
+  <section class="screen" id="scr_thanks"></section>
+</main>
+
+<footer class="site">
+  <div id="disclaimer"></div>
+</footer>

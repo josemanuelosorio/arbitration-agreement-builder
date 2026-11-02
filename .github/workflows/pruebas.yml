@@ -1,0 +1,25 @@
+name: Pruebas
+
+on:
+  push:
+  pull_request:
+
+jobs:
+  golden:
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "24"
+      - name: Validar el modelo y regenerar el prototipo
+        run: python3 scripts/build.py
+      - name: El prototipo publicado está al día con el modelo
+        run: git diff --exit-code prototype/index.html
+      - name: Instalar Playwright
+        run: npm install --no-audit --no-fund && npx playwright install --with-deps chromium
+      - name: Pruebas golden
+        run: npm test

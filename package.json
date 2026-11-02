@@ -1,0 +1,13 @@
+{
+  "name": "arbitration-agreement-builder",
+  "version": "0.4.0",
+  "private": true,
+  "description": "ICC arbitration clause builder: declarative content model + generic engine. See README.md.",
+  "scripts": {
+    "build": "python3 scripts/build.py",
+    "test": "node tests/golden.spec.js"
+  },
+  "devDependencies": {
+    "playwright": "1.64.1"
+  }
+}

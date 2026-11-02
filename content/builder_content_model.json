@@ -1,0 +1,695 @@
+{
+  "meta": {
+    "project": "Arbitration Agreement Builder",
+    "artifact": "Content model, single source of truth (spec for repository content files, prototype engine, and owner review)",
+    "version": "0.4",
+    "date": "2026-08-04",
+    "author": "Jose (intern)",
+    "supersedes": "v0.3 (2026-07-31; changes in v0.4: spec paragraph 8 item 3 executed: tooltip and explanation texts for all 14 questions, EN drafts signoff_required, de pending; explanation field added per question and ui_copy.explanation_ui added (schema addition, enforced by new validator rules: both texts required per question, number-free policy); open item 3 delivered for review, open item 11 added (ICC Rules 2026 sweep with sources); no clause fragment, effect, parameter or flow logic touched). v0.2 (2026-07-30; changes in v0.3: owner decisions of 31.07 absorbed: Geneva added to the seat list; §4.2.3 override kept as binding clause text per owner decision, advisory reworded accordingly; language list confirmed short for now). v0.2 superseded v0.1 (2026-07-29).",
+    "sources": [
+      "Consolidated Specification v1.x (owner, 30 Jul 2026): AUTHORITATIVE. Question logic, wordings, placements, decided items. Referenced below as spec §.",
+      "owner e-mail decisions of 31 Jul 2026: §4.2.3 override stays as is ('the ICC would treat it as binding'); include Geneva; language list ok shorter for now.",
+      "builder_content_model_v0.1.json: superseded; wireframe frame refs kept via spec Annex A crosswalk.",
+      "ICC published texts at iccwbo.org: all ICC wordings must be re-lifted verbatim at content-entry time, never from memory.",
+      "ICC Rules of Arbitration in force from 1 June 2026 and the new scales: swept on 04.08.2026 (open item 11). Rule-dependent values are still lifted verbatim from iccwbo.org at content entry, never from memory."
+    ],
+    "status_legend": {
+      "settled_spec": "Settled in the spec (✅). Build to this. ICC texts still re-verified verbatim at content entry.",
+      "signoff_required": "Wording requires owner sign-off before publication (⚠): firm drafting, not ICC model text, or verification against iccwbo.org pending.",
+      "phase2": "Deliberately out of MVP scope (⏭).",
+      "assumption": "Inferred by us, not in the spec. Confirm with the owner.",
+      "tbd": "Not defined yet. Needs owner input."
+    },
+    "ui_languages": ["en", "de"],
+    "clause_output_languages": ["en", "de"],
+    "i18n_note": "Every user-facing string is an {en, de} object. de: \"pending\" is the explicit marker of spec §1.3.1: buildable interim state, fails only if silently missing. German is the final content pass (spec §7.4).",
+    "engine_contract": {
+      "note": "Mirrors spec §1.3.3. Anything outside these vocabularies is a code change.",
+      "actions": ["include_fragment", "omit_fragment", "set_param", "show_advisory", "none"],
+      "condition_forms": ["equals", "not_equals", "in", "answered", "not_answered", "all_of", "any_of"],
+      "placements": ["replaces_base", "paragraph_before", "in_clause", "paragraph_after", "advisory"],
+      "text_operations": ["append_sentence", "substitute", "conditional_rider"],
+      "input_types": ["single_choice", "dropdown", "dropdown_other_free_text", "free_text", "integer", "amount_currency", "yes_no_toggle"]
+    }
+  },
+
+  "institutions": [
+    {
+      "id": "icc",
+      "display_name": { "en": "International Chamber of Commerce (ICC)", "de": "pending" },
+      "rules_name": { "en": "ICC Rules of Arbitration", "de": "pending" },
+      "enabled": true,
+      "note": "MVP is single-institution by decision (spec §1.2). The engine must contain no literal reference to this institution (spec §1.3.3): everything reaches it as data keyed by institution id."
+    }
+  ],
+
+  "modes": [
+    {
+      "id": "simple",
+      "entry_label": { "en": "Keep it Simple", "de": "pending" },
+      "progress_style": "step_x_of_4",
+      "question_flow": ["arbitrator_count", "seat", "language", "confidentiality"],
+      "overrides": {
+        "confidentiality": {
+          "input_type": "yes_no_toggle",
+          "default_option": "no",
+          "options_subset": ["yes", "no"],
+          "status": "settled_spec (§3: Yes/No toggle, default No, no 'I don't know' in Simple mode; mode-scoping form of §1.3.3)"
+        }
+      },
+      "note": "Options and effects otherwise identical to Advanced (§3). The 'unlocks president_selection' effect dangles harmlessly here: deliberate (§3)."
+    },
+    {
+      "id": "advanced",
+      "entry_label": { "en": "Advanced Mode", "de": "pending" },
+      "progress_style": "phase_bar",
+      "phases": [
+        { "id": "core_elements", "label": { "en": "Core elements", "de": "pending" },
+          "questions": ["arbitrator_count", "president_selection", "seat", "language", "governing_law_arb_agreement"] },
+        { "id": "procedural_details", "label": { "en": "Procedural details", "de": "pending" },
+          "questions": ["confidentiality", "emergency_arbitrator", "expedited_proceedings", "document_production", "related_contracts", "multi_party"] },
+        { "id": "amicable_resolution", "label": { "en": "Amicable resolution", "de": "pending" },
+          "questions": ["mediation_include", "mediation_type", "mediation_waiting_period"] },
+        { "id": "final_clause", "label": { "en": "Final clause", "de": "pending" }, "questions": [] }
+      ]
+    }
+  ],
+
+  "parameters": {
+    "arbitrator_wording": {
+      "localized": true,
+      "default": { "en": "one or more arbitrators", "de": "pending" },
+      "values": {
+        "one": { "en": "one arbitrator", "de": "pending" },
+        "three": { "en": "three arbitrators", "de": "pending" }
+      },
+      "status": "settled_spec (§4.1.1: 'one arbitrator', NOT 'a sole arbitrator'; both source drafts agree. Resolves the open assumption of model v0.1. Parameter, not text replacement, because the same value fills the base clause and Variant D's integrated text.)"
+    },
+    "seat_location": { "localized": false, "from_input": true },
+    "language_value": { "localized": false, "from_input": true },
+    "law_value": { "localized": false, "from_input": true, "note": "Adjective, because the sentence reads 'governed by [X] law' (§4.1.5). German grammatical integration travels inside localized content at the German pass (§7.4)." },
+    "threshold_amount": { "localized": false, "from_input": true, "display": "thousand_separated (§4.2.3)" },
+    "threshold_currency": { "localized": false, "from_input": true },
+    "waiting_period_days": { "localized": false, "from_input": true, "recommended_default": 45 }
+  },
+
+  "icc_default_expedited_threshold": {
+    "amount": null, "currency": null,
+    "status": "tbd (spec §4.2.3 asks for a below-default warning; the default ceiling value must be lifted from iccwbo.org at content entry, never from memory. Note 04.08.2026: the ICC Rules in force since 1 June 2026 changed the default ceiling for agreements concluded from that date, and this builder only emits agreements after it, so the value entered must be the post-change one (open item 11). Warning stays dormant until the value is entered.)"
+  },
+
+  "unknown_answer_summary": {
+    "status": "assumption (spec §8 item 6: our proposal, accepted into the spec as 'accept or reject'; shown until the owner rejects)",
+    "behavior": "Topics answered 'I don't know' are listed on the final screen as left to defaults; explicit delegations ('Let the ICC Court decide') are listed separately."
+  },
+
+  "questions": [
+    {
+      "id": "arbitrator_count", "institution": "icc", "modes": ["simple", "advanced"],
+      "phase": "core_elements", "advanced_frame": "1(a)", "spec_ref": "§4.1.1",
+      "topic_label": { "en": "Number of arbitrators", "de": "pending" },
+      "title": { "en": "How many arbitrators should decide the dispute?", "de": "pending" },
+      "title_status": "settled_spec",
+      "tooltip": { "en": "Sets how many arbitrators decide the dispute. The choice drives cost, speed and how the tribunal is appointed.", "de": "pending" },
+      "tooltip_status": "signoff_required (spec paragraph 8 item 3: EN draft by intern, 04.08.2026, for owner correction rather than drafting; deliberately number-free: no article numbers, no thresholds, no rules-version references)",
+      "explanation": { "en": "One arbitrator is faster and cheaper, and is the usual choice for ordinary commercial disputes. Three arbitrators cost more and take longer to appoint, but each side gets a hand in shaping the tribunal and no single person carries the decision alone, which parties often prefer for high-value or complex disputes. Leaving the choice to the ICC Court is not a gap in the clause: the Court then fixes the number based on the circumstances of the case.", "de": "pending" },
+      "explanation_status": "signoff_required (spec paragraph 8 item 3: EN draft by intern, 04.08.2026, for owner correction rather than drafting; deliberately number-free: no article numbers, no thresholds, no rules-version references)",
+      "options": [
+        { "id": "one", "label": { "en": "One arbitrator", "de": "pending" },
+          "effects": [{ "action": "set_param", "param": "arbitrator_wording", "value": "one" }] },
+        { "id": "three", "label": { "en": "Three arbitrators", "de": "pending" },
+          "effects": [{ "action": "set_param", "param": "arbitrator_wording", "value": "three" }],
+          "note": "Unlocks president_selection via that question's visible_if (Advanced only; dangles harmlessly in Simple, §3)." },
+        { "id": "icc_court_decides", "label": { "en": "Let the ICC Court decide", "de": "pending" },
+          "effects": [{ "action": "none" }],
+          "summary": { "type": "delegated", "note": { "en": "Number of arbitrators: left to the ICC Court (default wording kept)", "de": "pending" } } },
+        { "id": "dont_know", "label": { "en": "I don't know", "de": "pending" },
+          "effects": [{ "action": "none" }],
+          "summary": { "type": "default", "note": { "en": "Number of arbitrators: default wording 'one or more arbitrators' kept", "de": "pending" } } }
+      ],
+      "options_status": "settled_spec"
+    },
+    {
+      "id": "president_selection", "institution": "icc", "modes": ["advanced"],
+      "phase": "core_elements", "advanced_frame": "1(b)", "spec_ref": "§4.1.2",
+      "visible_if": { "question": "arbitrator_count", "equals": "three" },
+      "visible_if_status": "settled_spec",
+      "topic_label": { "en": "President of the tribunal", "de": "pending" },
+      "title": { "en": "How should the president of the tribunal be selected?", "de": "pending" },
+      "title_status": "settled_spec",
+      "tooltip": { "en": "Decides who nominates the president of a three-member tribunal: the two co-arbitrators together, or the ICC Court.", "de": "pending" },
+      "tooltip_status": "signoff_required (spec paragraph 8 item 3: EN draft by intern, 04.08.2026, for owner correction rather than drafting; deliberately number-free: no article numbers, no thresholds, no rules-version references. Review together with f_president, itself signoff_required.)",
+      "explanation": { "en": "With a joint nomination, the arbitrators chosen by each side agree on the chair, which gives the parties indirect influence over the tribunal's composition and is common in practice. If the co-arbitrators cannot agree, or if you prefer neutrality by design, the ICC Court appoints the president under its standard procedure. Choosing the Court is not a downgrade; it is the default mechanism the Rules provide.", "de": "pending" },
+      "explanation_status": "signoff_required (spec paragraph 8 item 3: EN draft by intern, 04.08.2026, for owner correction rather than drafting; deliberately number-free: no article numbers, no thresholds, no rules-version references. Review together with f_president, itself signoff_required.)",
+      "options": [
+        { "id": "joint_nomination", "label": { "en": "Co-arbitrators jointly nominate", "de": "pending" },
+          "effects": [{ "action": "include_fragment", "fragment": "f_president" }] },
+        { "id": "icc_court_appoints", "label": { "en": "ICC Court appoints", "de": "pending" },
+          "effects": [{ "action": "none" }],
+          "summary": { "type": "delegated", "note": { "en": "President: appointed under the standard ICC Rules", "de": "pending" } } },
+        { "id": "dont_know", "label": { "en": "I don't know", "de": "pending" },
+          "effects": [{ "action": "none" }],
+          "summary": { "type": "default", "note": { "en": "President: standard ICC Rules apply", "de": "pending" } } }
+      ],
+      "options_status": "settled_spec (replaces the provisional prototype options of v0.1; open item 3 of v0.1 closed)"
+    },
+    {
+      "id": "seat", "institution": "icc", "modes": ["simple", "advanced"],
+      "phase": "core_elements", "advanced_frame": "1(c)", "spec_ref": "§4.1.3",
+      "topic_label": { "en": "Place of arbitration", "de": "pending" },
+      "title": { "en": "What should be the place of arbitration?", "de": "pending" },
+      "title_status": "settled_spec",
+      "tooltip": { "en": "The seat is the legal home of the arbitration, not just a venue: it determines which courts supervise the proceedings and where the award is legally made.", "de": "pending" },
+      "tooltip_status": "signoff_required (spec paragraph 8 item 3: EN draft by intern, 04.08.2026, for owner correction rather than drafting; deliberately number-free: no article numbers, no thresholds, no rules-version references)",
+      "explanation": { "en": "The seat fixes the procedural law of the arbitration, decides which national courts can assist or intervene, and shapes how the resulting award travels internationally. Hearings can still take place elsewhere, or online: the seat is a legal anchor, not a promise to meet there. Established arbitration seats offer predictable, arbitration-friendly courts; if the parties cannot agree on one, leaving the seat to the ICC Court keeps the clause workable.", "de": "pending" },
+      "explanation_status": "signoff_required (spec paragraph 8 item 3: EN draft by intern, 04.08.2026, for owner correction rather than drafting; deliberately number-free: no article numbers, no thresholds, no rules-version references)",
+      "options": [
+        { "id": "choose_location", "label": { "en": "Choose location", "de": "pending" },
+          "input": { "type": "dropdown", "param": "seat_location", "label": { "en": "Place of arbitration", "de": "pending" },
+            "items": ["Frankfurt am Main, Germany", "Geneva, Switzerland", "London, United Kingdom", "New York City, United States", "Paris, France", "Vienna, Austria", "Zurich, Switzerland"] },
+          "effects": [{ "action": "set_param", "param": "seat_location", "from_input": true },
+                      { "action": "include_fragment", "fragment": "f_seat" }] },
+        { "id": "other", "label": { "en": "Other: Enter Location", "de": "pending" },
+          "input": { "type": "free_text", "param": "seat_location", "label": { "en": "Enter location as City, Country", "de": "pending" },
+            "placeholder": "e.g. Oslo, Norway", "validation_hint": "City, Country pattern (spec §7.5)" },
+          "effects": [{ "action": "set_param", "param": "seat_location", "from_input": true },
+                      { "action": "include_fragment", "fragment": "f_seat" }] },
+        { "id": "icc_court_determines", "label": { "en": "Let the ICC Court determine", "de": "pending" },
+          "effects": [{ "action": "none" }],
+          "summary": { "type": "delegated", "note": { "en": "Place of arbitration: left for the ICC Court to determine", "de": "pending" } } },
+        { "id": "dont_know", "label": { "en": "I don't know", "de": "pending" },
+          "effects": [{ "action": "none" }],
+          "summary": { "type": "default", "note": { "en": "Place of arbitration: no seat named (fragment omitted)", "de": "pending" } } }
+      ],
+      "options_status": "settled_spec (dropdown list from §4.1.3; Geneva added by owner decision of 31.07.2026)"
+    },
+    {
+      "id": "language", "institution": "icc", "modes": ["simple", "advanced"],
+      "phase": "core_elements", "advanced_frame": "1(d)", "spec_ref": "§4.1.4",
+      "topic_label": { "en": "Language", "de": "pending" },
+      "title": { "en": "What should be the language of arbitration?", "de": "pending" },
+      "title_status": "settled_spec",
+      "tooltip": { "en": "Fixes the language of the proceedings: submissions, hearings and the award.", "de": "pending" },
+      "tooltip_status": "signoff_required (spec paragraph 8 item 3: EN draft by intern, 04.08.2026, for owner correction rather than drafting; deliberately number-free: no article numbers, no thresholds, no rules-version references)",
+      "explanation": { "en": "The practical rule is to pick the language of the contract and of most of the likely evidence, because translating documents and testimony is a real cost driver. A single language keeps the procedure efficient, and the tribunal can order translations where needed. If the parties work in different languages and cannot agree, leaving the choice to the tribunal avoids turning the clause negotiation into a stalemate.", "de": "pending" },
+      "explanation_status": "signoff_required (spec paragraph 8 item 3: EN draft by intern, 04.08.2026, for owner correction rather than drafting; deliberately number-free: no article numbers, no thresholds, no rules-version references)",
+      "options": [
+        { "id": "select_language", "label": { "en": "Select language", "de": "pending" },
+          "input": { "type": "dropdown", "param": "language_value", "label": { "en": "Language of arbitration", "de": "pending" },
+            "items": ["English", "French", "German"] },
+          "effects": [{ "action": "set_param", "param": "language_value", "from_input": true },
+                      { "action": "include_fragment", "fragment": "f_language" }] },
+        { "id": "other", "label": { "en": "Other", "de": "pending" },
+          "input": { "type": "free_text", "param": "language_value", "label": { "en": "Language", "de": "pending" }, "placeholder": "e.g. Spanish" },
+          "effects": [{ "action": "set_param", "param": "language_value", "from_input": true },
+                      { "action": "include_fragment", "fragment": "f_language" }] },
+        { "id": "tribunal_determines", "label": { "en": "Let the tribunal determine", "de": "pending" },
+          "effects": [{ "action": "none" }],
+          "summary": { "type": "delegated", "note": { "en": "Language: left for the tribunal to determine", "de": "pending" } } },
+        { "id": "dont_know", "label": { "en": "I don't know", "de": "pending" },
+          "effects": [{ "action": "none" }],
+          "summary": { "type": "default", "note": { "en": "Language: not specified (fragment omitted)", "de": "pending" } } }
+      ],
+      "options_status": "settled_spec (single-choice dropdown English/French/German + Other, §4.1.4)"
+    },
+    {
+      "id": "governing_law_arb_agreement", "institution": "icc", "modes": ["advanced"],
+      "phase": "core_elements", "advanced_frame": "1(e)", "spec_ref": "§4.1.5",
+      "topic_label": { "en": "Law governing the arbitration agreement", "de": "pending" },
+      "title": { "en": "Do you want to determine the law applicable to the arbitration agreement?", "de": "pending" },
+      "title_status": "settled_spec",
+      "tooltip": { "en": "Chooses the law governing the arbitration agreement itself, which can differ from the law of the main contract.", "de": "pending" },
+      "tooltip_status": "signoff_required (spec paragraph 8 item 3: EN draft by intern, 04.08.2026, for owner correction rather than drafting; deliberately number-free: no article numbers, no thresholds, no rules-version references. Review together with f_gov_law, itself signoff_required.)",
+      "explanation": { "en": "The arbitration agreement is legally separable from the contract around it, so its validity and scope can be judged under a law of its own. If the clause says nothing, courts in different countries answer that question differently, which invites side disputes exactly when the clause is under attack. Naming the law costs one sentence and removes that uncertainty; parties commonly align it with the law of the seat or the law of the main contract.", "de": "pending" },
+      "explanation_status": "signoff_required (spec paragraph 8 item 3: EN draft by intern, 04.08.2026, for owner correction rather than drafting; deliberately number-free: no article numbers, no thresholds, no rules-version references. Review together with f_gov_law, itself signoff_required.)",
+      "options": [
+        { "id": "select_applicable_law", "label": { "en": "Select applicable law", "de": "pending" },
+          "input": { "type": "dropdown_other_free_text", "param": "law_value", "label": { "en": "Law applicable to the arbitration agreement (not the main contract)", "de": "pending" },
+            "items": ["Austrian", "Swiss", "German", "French", "English", "Italian", "Spanish", "Dutch", "Swedish"],
+            "other_label": "Other (specify)", "item_display_suffix": " law",
+            "validation_hint": "Adjective fitting 'governed by [X] law' (spec §7.5)" },
+          "effects": [{ "action": "set_param", "param": "law_value", "from_input": true },
+                      { "action": "include_fragment", "fragment": "f_gov_law" }] },
+        { "id": "no", "label": { "en": "No", "de": "pending" }, "effects": [{ "action": "none" }] },
+        { "id": "dont_know", "label": { "en": "I don't know", "de": "pending" },
+          "effects": [{ "action": "none" }],
+          "summary": { "type": "default", "note": { "en": "Law of the arbitration agreement: not specified (fragment omitted)", "de": "pending" } } }
+      ],
+      "options_status": "settled_spec (list decided 30.07.2026, §4.1.5: Dutch and Swedish added vs v0.1, Other (specify) included)"
+    },
+    {
+      "id": "confidentiality", "institution": "icc", "modes": ["simple", "advanced"],
+      "phase": "procedural_details", "advanced_frame": "2(a)", "spec_ref": "§4.2.1",
+      "topic_label": { "en": "Confidentiality", "de": "pending" },
+      "title": { "en": "Should the arbitration be confidential?", "de": "pending" },
+      "title_status": "settled_spec",
+      "tooltip": { "en": "Decides whether the parties expressly commit to keeping the arbitration confidential.", "de": "pending" },
+      "tooltip_status": "signoff_required (spec paragraph 8 item 3: EN draft by intern, 04.08.2026, for owner correction rather than drafting; deliberately number-free: no article numbers, no thresholds, no rules-version references. Review together with f_confidentiality, itself signoff_required. Replaces the wireframe placeholder kept since v0.1.)",
+      "explanation": { "en": "Arbitration hearings are private, but privacy is not confidentiality: the ICC Rules do not impose a general confidentiality obligation on the parties themselves. If confidentiality matters, the clause must say so; if it stays silent, protection depends on the law of the seat and may be thinner than expected. An express duty also has consequences of its own, for example when a dispute must be disclosed to insurers, auditors or regulators, so some parties deliberately leave it out.", "de": "pending" },
+      "explanation_status": "signoff_required (spec paragraph 8 item 3: EN draft by intern, 04.08.2026, for owner correction rather than drafting; deliberately number-free: no article numbers, no thresholds, no rules-version references. Review together with f_confidentiality, itself signoff_required. Replaces the wireframe placeholder kept since v0.1.)",
+      "options": [
+        { "id": "yes", "label": { "en": "Yes", "de": "pending" },
+          "effects": [{ "action": "include_fragment", "fragment": "f_confidentiality" }] },
+        { "id": "no", "label": { "en": "No", "de": "pending" }, "effects": [{ "action": "none" }] },
+        { "id": "dont_know", "label": { "en": "I don't know", "de": "pending" },
+          "effects": [{ "action": "none" }],
+          "summary": { "type": "default", "note": { "en": "Confidentiality: no wording added", "de": "pending" } } }
+      ],
+      "options_status": "settled_spec (Advanced: Yes/No/I don't know per §4.2.1 table; Simple overrides to a Yes/No toggle default No, §3)"
+    },
+    {
+      "id": "emergency_arbitrator", "institution": "icc", "modes": ["advanced"],
+      "phase": "procedural_details", "advanced_frame": "2(b)", "spec_ref": "§4.2.2",
+      "topic_label": { "en": "Emergency arbitration", "de": "pending" },
+      "title": { "en": "Do you want to modify the Emergency Arbitrator Provisions?", "de": "pending" },
+      "title_status": "settled_spec",
+      "tooltip": { "en": "Controls access to an emergency arbitrator for urgent measures before the tribunal exists.", "de": "pending" },
+      "tooltip_status": "signoff_required (spec paragraph 8 item 3: EN draft by intern, 04.08.2026, for owner correction rather than drafting; deliberately number-free: no article numbers, no thresholds, no rules-version references)",
+      "explanation": { "en": "By default, a party can ask an emergency arbitrator for urgent interim relief in the window before the tribunal is constituted, for example to stop an asset from disappearing or evidence from being destroyed. Opting out closes that door; urgent relief then comes from the state courts alone, which some parties prefer where local injunctions are fast and reliable. Keeping the default adds nothing to the clause text; it simply preserves the option for whichever party one day needs speed.", "de": "pending" },
+      "explanation_status": "signoff_required (spec paragraph 8 item 3: EN draft by intern, 04.08.2026, for owner correction rather than drafting; deliberately number-free: no article numbers, no thresholds, no rules-version references)",
+      "options": [
+        { "id": "keep_default", "label": { "en": "Keep default (included)", "de": "pending" },
+          "effects": [{ "action": "none" }],
+          "summary": { "type": "delegated", "note": { "en": "Emergency arbitration: ICC default kept (provisions apply)", "de": "pending" } } },
+        { "id": "opt_out", "label": { "en": "Opt out", "de": "pending" },
+          "effects": [{ "action": "include_fragment", "fragment": "f_ea_optout" }] },
+        { "id": "dont_know", "label": { "en": "I don't know", "de": "pending" },
+          "effects": [{ "action": "none" }],
+          "summary": { "type": "default", "note": { "en": "Emergency arbitration: ICC default kept (provisions apply)", "de": "pending" } } }
+      ],
+      "options_status": "settled_spec",
+      "note": "Also read by the Variant D rider (§4.3.3): 'not set to Opt out' deliberately includes unanswered."
+    },
+    {
+      "id": "expedited_proceedings", "institution": "icc", "modes": ["advanced"],
+      "phase": "procedural_details", "advanced_frame": "2(c)", "spec_ref": "§4.2.3",
+      "topic_label": { "en": "Expedited Proceedings", "de": "pending" },
+      "title": { "en": "Do you want to modify the Expedited Proceedings Provisions?", "de": "pending" },
+      "title_status": "settled_spec",
+      "tooltip": { "en": "Adjusts whether the ICC's fast-track procedure applies. By default it covers disputes below a ceiling set by the Rules.", "de": "pending" },
+      "tooltip_status": "signoff_required (spec paragraph 8 item 3: EN draft by intern, 04.08.2026, for owner correction rather than drafting; deliberately number-free: no article numbers, no thresholds, no rules-version references)",
+      "explanation": { "en": "The expedited procedure trades procedural room for speed and lower cost, and by default it applies automatically below the ceiling the ICC Rules set from time to time. You can extend it to disputes of any size, set your own ceiling, or exclude it entirely if you want the full procedure regardless of amount. One interaction to weigh: under the expedited framework the ICC Court may put the case before a sole arbitrator even where the clause provides for three, so this answer works together with your choice on the number of arbitrators.", "de": "pending" },
+      "explanation_status": "signoff_required (spec paragraph 8 item 3: EN draft by intern, 04.08.2026, for owner correction rather than drafting; deliberately number-free: no article numbers, no thresholds, no rules-version references)",
+      "options": [
+        { "id": "keep_default", "label": { "en": "Keep default", "de": "pending" },
+          "effects": [{ "action": "none" }],
+          "summary": { "type": "delegated", "note": { "en": "Expedited Proceedings: ICC default kept (apply below the ICC threshold)", "de": "pending" } } },
+        { "id": "always_apply", "label": { "en": "Always apply", "de": "pending" },
+          "effects": [{ "action": "include_fragment", "fragment": "f_expedited_always" }] },
+        { "id": "custom_threshold", "label": { "en": "Custom threshold", "de": "pending" },
+          "input": { "type": "amount_currency", "params": { "amount": "threshold_amount", "currency": "threshold_currency" },
+            "label": { "en": "Expedited rules apply up to this amount in dispute", "de": "pending" },
+            "currencies": ["USD", "EUR", "CHF", "GBP"],
+            "below_default_warning": "Warn when the custom threshold lies below the ICC default threshold (§4.2.3); dormant until icc_default_expedited_threshold is entered" },
+          "effects": [{ "action": "set_param", "param": "threshold_amount", "from_input": true },
+                      { "action": "set_param", "param": "threshold_currency", "from_input": true },
+                      { "action": "include_fragment", "fragment": "f_expedited_threshold" }] },
+        { "id": "opt_out", "label": { "en": "Opt out", "de": "pending" },
+          "effects": [{ "action": "include_fragment", "fragment": "f_expedited_optout" }] },
+        { "id": "dont_know", "label": { "en": "I don't know", "de": "pending" },
+          "effects": [{ "action": "none" }],
+          "summary": { "type": "default", "note": { "en": "Expedited Proceedings: ICC default kept", "de": "pending" } } }
+      ],
+      "options_status": "settled_spec (currency selector USD/EUR/CHF/GBP decided 30.07.2026; USD preselected is our assumption)"
+    },
+    {
+      "id": "document_production", "institution": "icc", "modes": ["advanced"],
+      "phase": "procedural_details", "advanced_frame": "2(d)", "spec_ref": "§4.2.4",
+      "visible_if": { "question": "expedited_proceedings", "not_equals": "always_apply" },
+      "visible_if_status": "settled_spec (visible while the gating question is unanswered, by the not_equals semantics of §1.3.3)",
+      "topic_label": { "en": "Document production powers", "de": "pending" },
+      "title": { "en": "Do you want to explicitly grant the arbitral tribunal the power to limit document production requests?", "de": "pending" },
+      "title_status": "settled_spec",
+      "tooltip": { "en": "Decides whether the clause expressly empowers the tribunal to keep document production within limits.", "de": "pending" },
+      "tooltip_status": "signoff_required (spec paragraph 8 item 3: EN draft by intern, 04.08.2026, for owner correction rather than drafting; deliberately number-free: no article numbers, no thresholds, no rules-version references)",
+      "explanation": { "en": "Document production is one of the main cost drivers in arbitration, and expectations differ sharply between legal traditions. An express power to limit production signals from the outset that the tribunal can keep requests proportionate, which helps when a party comes from a discovery-heavy background. Tribunals generally hold broad case-management powers anyway, so this sentence is less about creating a power than about removing the argument over it.", "de": "pending" },
+      "explanation_status": "signoff_required (spec paragraph 8 item 3: EN draft by intern, 04.08.2026, for owner correction rather than drafting; deliberately number-free: no article numbers, no thresholds, no rules-version references)",
+      "options": [
+        { "id": "yes", "label": { "en": "Yes", "de": "pending" },
+          "effects": [{ "action": "include_fragment", "fragment": "f_document_production" }] },
+        { "id": "no", "label": { "en": "No", "de": "pending" }, "effects": [{ "action": "none" }] },
+        { "id": "dont_know", "label": { "en": "I don't know", "de": "pending" },
+          "effects": [{ "action": "none" }],
+          "summary": { "type": "default", "note": { "en": "Document production: no wording added", "de": "pending" } } }
+      ],
+      "options_status": "settled_spec (this question DOES produce clause text, §4.2.4; v0.1's tbd fragment now drafted, sign-off pending)"
+    },
+    {
+      "id": "related_contracts", "institution": "icc", "modes": ["advanced"],
+      "phase": "procedural_details", "advanced_frame": "3(a)", "spec_ref": "§4.2.5",
+      "topic_label": { "en": "Related contracts", "de": "pending" },
+      "title": { "en": "Are there other contracts that form part of the same transaction or are closely related to this contract?", "de": "pending" },
+      "title_status": "settled_spec",
+      "tooltip": { "en": "Flags whether this contract belongs to a wider set of agreements whose dispute clauses should work together.", "de": "pending" },
+      "tooltip_status": "signoff_required (spec paragraph 8 item 3: EN draft by intern, 04.08.2026, for owner correction rather than drafting; deliberately number-free: no article numbers, no thresholds, no rules-version references)",
+      "explanation": { "en": "When related contracts carry different dispute resolution clauses, one commercial conflict can splinter into parallel proceedings with inconsistent outcomes. This question therefore produces guidance rather than clause text: if related contracts exist, the practical task is to keep their clauses consistent, and that is a review of the whole contract set rather than of a single clause. Your answer does not change the generated wording; it changes what you should check before signing.", "de": "pending" },
+      "explanation_status": "signoff_required (spec paragraph 8 item 3: EN draft by intern, 04.08.2026, for owner correction rather than drafting; deliberately number-free: no article numbers, no thresholds, no rules-version references)",
+      "options": [
+        { "id": "yes", "label": { "en": "Yes", "de": "pending" },
+          "effects": [{ "action": "show_advisory", "advisory": "adv_related_yes" }] },
+        { "id": "no", "label": { "en": "No", "de": "pending" }, "effects": [{ "action": "none" }] },
+        { "id": "dont_know", "label": { "en": "I don't know", "de": "pending" },
+          "effects": [{ "action": "show_advisory", "advisory": "adv_related_dont_know" }] }
+      ],
+      "options_status": "settled_spec (warning only, never clause text, §4.2.5; note the asymmetry: here 'I don't know' also warns, in multi_party it does not)"
+    },
+    {
+      "id": "multi_party", "institution": "icc", "modes": ["advanced"],
+      "phase": "procedural_details", "advanced_frame": "3(b)", "spec_ref": "§4.2.6",
+      "topic_label": { "en": "Multi-party scenarios", "de": "pending" },
+      "title": { "en": "Do you anticipate including parties who have not signed the main contract in potential arbitration proceedings (e.g., affiliates, guarantors)?", "de": "pending" },
+      "title_status": "settled_spec",
+      "tooltip": { "en": "Flags whether parties who never signed the contract, such as affiliates or guarantors, may need to join a future arbitration.", "de": "pending" },
+      "tooltip_status": "signoff_required (spec paragraph 8 item 3: EN draft by intern, 04.08.2026, for owner correction rather than drafting; deliberately number-free: no article numbers, no thresholds, no rules-version references)",
+      "explanation": { "en": "Arbitration binds those who agreed to it, so bringing in non-signatories is legally delicate and depends heavily on the facts and the applicable law. If affiliates, guarantors or other group companies may end up in the dispute, the reliable route is tailored drafting across all the relevant documents, not a standard clause. Like the related-contracts question, this one produces a warning instead of text: its job is to tell you when a standard clause stops being enough.", "de": "pending" },
+      "explanation_status": "signoff_required (spec paragraph 8 item 3: EN draft by intern, 04.08.2026, for owner correction rather than drafting; deliberately number-free: no article numbers, no thresholds, no rules-version references)",
+      "options": [
+        { "id": "yes", "label": { "en": "Yes", "de": "pending" },
+          "effects": [{ "action": "show_advisory", "advisory": "adv_multi_yes" }] },
+        { "id": "no", "label": { "en": "No", "de": "pending" }, "effects": [{ "action": "none" }] },
+        { "id": "dont_know", "label": { "en": "I don't know", "de": "pending" }, "effects": [{ "action": "none" }] }
+      ],
+      "options_status": "settled_spec (warning only, §4.2.6)"
+    },
+    {
+      "id": "mediation_include", "institution": "icc", "modes": ["advanced"],
+      "phase": "amicable_resolution", "advanced_frame": "78", "spec_ref": "§4.3.1",
+      "topic_label": { "en": "Mediation provisions", "de": "pending" },
+      "title": { "en": "Would you like to add mediation provisions to your arbitration clause?", "de": "pending" },
+      "title_status": "settled_spec",
+      "tooltip": { "en": "Adds a mediation layer to the clause, so the parties try a settlement track before or alongside arbitration.", "de": "pending" },
+      "tooltip_status": "signoff_required (spec paragraph 8 item 3: EN draft by intern, 04.08.2026, for owner correction rather than drafting; deliberately number-free: no article numbers, no thresholds, no rules-version references)",
+      "explanation": { "en": "Mediation is a structured negotiation guided by a neutral, and settling there is usually far cheaper than fighting an arbitration to the end. Written into the clause, it can range from a gentle option to a mandatory step before arbitration can start, depending on the variant chosen next. The design question is bite: more obligation creates more settlement pressure, but the strictest form also delays access to the tribunal, which matters if your disputes tend to be urgent.", "de": "pending" },
+      "explanation_status": "signoff_required (spec paragraph 8 item 3: EN draft by intern, 04.08.2026, for owner correction rather than drafting; deliberately number-free: no article numbers, no thresholds, no rules-version references)",
+      "options": [
+        { "id": "yes", "label": { "en": "Yes", "de": "pending" },
+          "effects": [{ "action": "none" }],
+          "note": "Unlocks mediation_type via visible_if; the preview keeps showing the single-tier clause until a variant is chosen (§4.3.1)." },
+        { "id": "no", "label": { "en": "No", "de": "pending" }, "effects": [{ "action": "none" }] },
+        { "id": "dont_know", "label": { "en": "I don't know", "de": "pending" },
+          "effects": [{ "action": "none" }],
+          "summary": { "type": "default", "note": { "en": "Mediation: no tier added (single-tier clause)", "de": "pending" } } }
+      ],
+      "options_status": "settled_spec"
+    },
+    {
+      "id": "mediation_type", "institution": "icc", "modes": ["advanced"],
+      "phase": "amicable_resolution", "advanced_frame": "4(a)", "spec_ref": "§4.3.2",
+      "visible_if": { "question": "mediation_include", "equals": "yes" },
+      "visible_if_status": "settled_spec",
+      "topic_label": { "en": "Type of mediation provision", "de": "pending" },
+      "title": { "en": "What type of mediation provision would you prefer?", "de": "pending" },
+      "title_status": "settled_spec",
+      "tooltip": { "en": "Chooses how strongly the clause commits the parties to mediation, from purely optional to a mandatory step before arbitration.", "de": "pending" },
+      "tooltip_status": "signoff_required (spec paragraph 8 item 3: EN draft by intern, 04.08.2026, for owner correction rather than drafting; deliberately number-free: no article numbers, no thresholds, no rules-version references. Review together with the four mediation fragments, themselves signoff_required.)",
+      "explanation": { "en": "The variants differ in the obligation they create. Variant A keeps mediation available at any time without restraining arbitration; Variant B obliges the parties to consider mediation first; Variant C requires starting mediation but lets arbitration proceed in parallel; Variant D makes mediation a true precondition, so arbitration must wait out an agreed period. The stricter the variant, the stronger the settlement pressure and the later a tribunal can act, so match it to how urgent your disputes are likely to be.", "de": "pending" },
+      "explanation_status": "signoff_required (spec paragraph 8 item 3: EN draft by intern, 04.08.2026, for owner correction rather than drafting; deliberately number-free: no article numbers, no thresholds, no rules-version references. Review together with the four mediation fragments, themselves signoff_required.)",
+      "options": [
+        { "id": "a_optional", "label": { "en": "Variant A. Optional", "de": "pending" },
+          "effects": [{ "action": "include_fragment", "fragment": "f_mediation_a" }] },
+        { "id": "b_obligation_to_consider", "label": { "en": "Variant B. Obligation to consider", "de": "pending" },
+          "effects": [{ "action": "include_fragment", "fragment": "f_mediation_b" }] },
+        { "id": "c_mandatory_parallel", "label": { "en": "Variant C. Mandatory with parallel arbitration permitted", "de": "pending" },
+          "effects": [{ "action": "include_fragment", "fragment": "f_mediation_c" }] },
+        { "id": "d_mandatory_step", "label": { "en": "Variant D. Mandatory step before arbitration", "de": "pending" },
+          "effects": [{ "action": "include_fragment", "fragment": "f_mediation_d" }] }
+      ],
+      "options_status": "settled_spec (always Variant A-D, never 'Option 4.A': spec Annex B item 2)"
+    },
+    {
+      "id": "mediation_waiting_period", "institution": "icc", "modes": ["advanced"],
+      "phase": "amicable_resolution", "advanced_frame": "4(b)", "spec_ref": "§4.3.3",
+      "visible_if": { "question": "mediation_type", "equals": "d_mandatory_step" },
+      "visible_if_status": "settled_spec (Variant D only: A and B create no bar, C expressly permits parallel arbitration. Closes v0.1's open item 7: NOT shown for C.)",
+      "topic_label": { "en": "Waiting period", "de": "pending" },
+      "title": { "en": "How long should parties wait after initiating mediation before being allowed to commence arbitration?", "de": "pending" },
+      "title_status": "settled_spec",
+      "tooltip": { "en": "Sets how long arbitration must wait after mediation begins. It exists only where mediation is a mandatory first step.", "de": "pending" },
+      "tooltip_status": "signoff_required (spec paragraph 8 item 3: EN draft by intern, 04.08.2026, for owner correction rather than drafting; deliberately number-free: no article numbers, no thresholds, no rules-version references)",
+      "explanation": { "en": "This period gives mediation a protected window: arbitration on the same dispute must wait until the period runs out or the parties settle. A shorter period keeps pressure on and preserves quick access to the tribunal; a longer one gives settlement more room but delays enforcement of your rights. The recommended default balances the two, and unless the clause opts out of emergency arbitration, urgent interim measures stay available during the wait.", "de": "pending" },
+      "explanation_status": "signoff_required (spec paragraph 8 item 3: EN draft by intern, 04.08.2026, for owner correction rather than drafting; deliberately number-free: no article numbers, no thresholds, no rules-version references)",
+      "options": [
+        { "id": "days_45", "label": { "en": "45 days (recommended)", "de": "pending" },
+          "effects": [{ "action": "set_param", "param": "waiting_period_days", "value": 45 }] },
+        { "id": "custom_duration", "label": { "en": "Custom duration: Enter number of days", "de": "pending" },
+          "input": { "type": "integer", "param": "waiting_period_days", "label": { "en": "Number of days", "de": "pending" }, "min": 1, "placeholder": "e.g. 60" },
+          "effects": [{ "action": "set_param", "param": "waiting_period_days", "from_input": true }] },
+        { "id": "dont_know", "label": { "en": "I don't know", "de": "pending" },
+          "effects": [{ "action": "set_param", "param": "waiting_period_days", "value": 45 }],
+          "summary": { "type": "default", "note": { "en": "Waiting period: 45-day recommended default applied", "de": "pending" } } }
+      ],
+      "options_status": "settled_spec"
+    }
+  ],
+
+  "clause_fragments": [
+    {
+      "id": "f_base", "institution": "icc", "placement": "in_clause", "order": 10, "base": true,
+      "text": { "en": "All disputes arising out of or in connection with the present contract shall be finally settled under the Rules of Arbitration of the International Chamber of Commerce by {arbitrator_wording} appointed in accordance with the said Rules.", "de": "pending" },
+      "status": "settled_spec (§2 ✅ ICC standard clause; re-verify verbatim against iccwbo.org at content entry)",
+      "spec_ref": "§2"
+    },
+    {
+      "id": "f_president", "institution": "icc", "placement": "in_clause", "order": 20,
+      "text": { "en": "The co-arbitrators shall jointly nominate the president.", "de": "pending" },
+      "status": "signoff_required (§4.1.2 ⚠ firm drafting, not ICC model text)",
+      "spec_ref": "§4.1.2"
+    },
+    {
+      "id": "f_seat", "institution": "icc", "placement": "in_clause", "order": 30,
+      "text": { "en": "The place of arbitration shall be {seat_location}.", "de": "pending" },
+      "status": "settled_spec (§4.1.3 ✅; single location slot per spec, replacing v0.1's city/country split)",
+      "spec_ref": "§4.1.3"
+    },
+    {
+      "id": "f_language", "institution": "icc", "placement": "in_clause", "order": 40,
+      "text": { "en": "The language of arbitration shall be {language_value}.", "de": "pending" },
+      "status": "settled_spec (§4.1.4 ✅)",
+      "spec_ref": "§4.1.4"
+    },
+    {
+      "id": "f_gov_law", "institution": "icc", "placement": "in_clause", "order": 50,
+      "text": { "en": "The arbitration agreement is governed by {law_value} law.", "de": "pending" },
+      "status": "signoff_required (§4.1.5 ⚠)",
+      "spec_ref": "§4.1.5"
+    },
+    {
+      "id": "f_confidentiality", "institution": "icc", "placement": "in_clause", "order": 60,
+      "text": { "en": "The arbitration shall be kept confidential.", "de": "pending" },
+      "status": "signoff_required (§4.2.1 ⚠ pure party drafting; no blanket ICC confidentiality default, real consequences)",
+      "spec_ref": "§4.2.1"
+    },
+    {
+      "id": "f_ea_optout", "institution": "icc", "placement": "in_clause", "order": 70,
+      "text": { "en": "The Emergency Arbitrator Provisions shall not apply.", "de": "pending" },
+      "status": "settled_spec (§4.2.2 ✅; re-verify verbatim)",
+      "spec_ref": "§4.2.2"
+    },
+    {
+      "id": "f_expedited_always", "institution": "icc", "placement": "in_clause", "order": 80,
+      "text": { "en": "The Expedited Procedure Rules shall apply irrespective of the amount in dispute.", "de": "pending" },
+      "status": "signoff_required (§4.2.3 ⚠: whether to use ICC's full official opt-in wording incl. the Article 30(2)(b) reference; Rules vs Provisions terminology to settle)",
+      "spec_ref": "§4.2.3"
+    },
+    {
+      "id": "f_expedited_threshold", "institution": "icc", "placement": "in_clause", "order": 80,
+      "text": { "en": "The Expedited Procedure Rules shall apply if the amount in dispute does not exceed {threshold_currency} {threshold_amount}.", "de": "pending" },
+      "status": "signoff_required (§4.2.3 ⚠: verify ICC's published custom-ceiling wording; terminology check. v0.1's tbd now drafted by the spec)",
+      "spec_ref": "§4.2.3"
+    },
+    {
+      "id": "f_expedited_optout", "institution": "icc", "placement": "in_clause", "order": 80,
+      "text": { "en": "The Expedited Procedure Provisions shall not apply.", "de": "pending" },
+      "status": "settled_spec (§4.2.3 ✅; re-verify verbatim)",
+      "spec_ref": "§4.2.3"
+    },
+    {
+      "id": "f_epp_three_override", "institution": "icc", "placement": "in_clause", "order": 85,
+      "included_if": { "all_of": [
+        { "question": "arbitrator_count", "equals": "three" },
+        { "question": "expedited_proceedings", "equals": "always_apply" }
+      ] },
+      "text": { "en": "Notwithstanding the application of the Expedited Procedure Provisions, the Court shall not have the power to appoint a sole arbitrator.", "de": "pending" },
+      "status": "settled_spec (§4.2.3 decided 30.07.2026 as advisory PLUS override fragment; substantive question CLOSED by owner decision of 31.07.2026: kept as binding clause text, 'the ICC would treat it as binding'. Order 85 = immediately after the Expedited sentence, §5.2 item 8)",
+      "spec_ref": "§4.2.3"
+    },
+    {
+      "id": "f_document_production", "institution": "icc", "placement": "in_clause", "order": 90,
+      "text": { "en": "The arbitral tribunal shall have the power to limit document production to what it considers necessary or appropriate.", "de": "pending" },
+      "status": "signoff_required (§4.2.4 ⚠; v0.1's tbd now drafted by the spec)",
+      "spec_ref": "§4.2.4"
+    },
+    {
+      "id": "f_mediation_a", "institution": "icc", "placement": "paragraph_after", "order": 10,
+      "text": { "en": "Notwithstanding the foregoing, the parties may at any time, without prejudice to any other proceedings, seek to settle any dispute arising out of or in connection with the present contract in accordance with the ICC Mediation Rules.", "de": "pending" },
+      "status": "signoff_required (§4.3.2 ⚠ firm working version; verify against ICC's published model mediation clauses and lift official wording verbatim where it differs)",
+      "spec_ref": "§4.3.2 Variant A"
+    },
+    {
+      "id": "f_mediation_b", "institution": "icc", "placement": "paragraph_before", "order": 10,
+      "text": { "en": "In the event of any dispute arising out of or in connection with the present contract, the parties agree in the first instance to discuss and consider referring the dispute to the ICC Mediation Rules. This shall not prevent any party from commencing arbitration in accordance with the below sub-clause.", "de": "pending" },
+      "status": "signoff_required (§4.3.2 ⚠; also §8 item 1: 'the below sub-clause' has no referent in an unnumbered output, decide numbering or rewording at the verbatim lift)",
+      "spec_ref": "§4.3.2 Variant B"
+    },
+    {
+      "id": "f_mediation_c", "institution": "icc", "placement": "paragraph_before", "order": 10,
+      "text": { "en": "In the event of any dispute arising out of or in connection with the present contract, the parties shall first refer the dispute to proceedings under the ICC Mediation Rules. The commencement of proceedings under the ICC Mediation Rules shall not prevent any party from commencing arbitration in accordance with the below sub-clause.", "de": "pending" },
+      "status": "signoff_required (§4.3.2 ⚠; same 'below sub-clause' point as Variant B)",
+      "spec_ref": "§4.3.2 Variant C"
+    },
+    {
+      "id": "f_mediation_d", "institution": "icc", "placement": "replaces_base", "order": 10,
+      "text": { "en": "In the event of any dispute arising out of or in connection with the present contract, the parties shall first refer the dispute to proceedings under the ICC Mediation Rules. If the dispute has not been settled pursuant to the said Rules within {waiting_period_days} days following the filing of a Request for Mediation or within such other period as the parties may agree in writing, such dispute shall thereafter be finally settled under the Rules of Arbitration of the International Chamber of Commerce by {arbitrator_wording} appointed in accordance with the said Rules.", "de": "pending" },
+      "riders": [
+        {
+          "id": "rider_emergency_measures",
+          "condition": { "question": "emergency_arbitrator", "not_equals": "opt_out" },
+          "condition_note": "Deliberately includes unanswered: the ICC default (provisions apply) then governs (§4.3.3).",
+          "text": { "en": "The {waiting_period_days}-day mediation period shall not prevent applications for Emergency Measures under the Emergency Arbitrator Provisions.", "de": "pending" },
+          "status": "signoff_required (§4.3.3 ⚠)"
+        }
+      ],
+      "status": "signoff_required (§4.3.2 Variant D ⚠: replaces the base clause, absorbs the arbitrator wording, single integrated paragraph per §5.3; verify against ICC model clauses)",
+      "spec_ref": "§4.3.2 Variant D + §4.3.3"
+    }
+  ],
+
+  "advisories": [
+    {
+      "id": "adv_related_yes", "institution": "icc",
+      "text": { "en": "Consider using consistent dispute resolution clauses across related contracts to avoid parallel proceedings or jurisdictional conflicts. Seek legal advice if unsure.", "de": "pending" },
+      "status": "signoff_required (§4.2.5 ⚠)", "spec_ref": "§4.2.5"
+    },
+    {
+      "id": "adv_related_dont_know", "institution": "icc",
+      "text": { "en": "If related contracts exist, ensure dispute resolution clauses are compatible. Inconsistent clauses can lead to complications. Seek legal advice if unsure.", "de": "pending" },
+      "status": "signoff_required (§4.2.5 ⚠)", "spec_ref": "§4.2.5"
+    },
+    {
+      "id": "adv_multi_yes", "institution": "icc",
+      "text": { "en": "Including non-signatories in arbitration requires careful drafting and legal consideration to ensure enforceability. Standard clauses may not suffice. Seek specific legal advice.", "de": "pending" },
+      "status": "signoff_required (§4.2.6 ⚠)", "spec_ref": "§4.2.6"
+    },
+    {
+      "id": "adv_epp_three", "institution": "icc",
+      "included_if": { "all_of": [
+        { "question": "arbitrator_count", "equals": "three" },
+        { "question": "expedited_proceedings", "equals": "always_apply" }
+      ] },
+      "text": { "en": "Note: under the Expedited Procedure Provisions, the ICC Court may in principle appoint a sole arbitrator notwithstanding the arbitration agreement. Because you chose three arbitrators and 'Always apply', an express stipulation preserving the three-member tribunal has been added to your clause.", "de": "pending" },
+      "status": "signoff_required (§4.2.3 requires an advisory but drafts no text; this wording is ours. Reworded 31.07.2026 after the owner decision to keep the override as binding clause text)",
+      "spec_ref": "§4.2.3"
+    }
+  ],
+
+  "assembly": {
+    "output_header": { "en": "Dispute Resolution", "de": "pending" },
+    "framing": "Header, then an empty line, then the clause text (§5.1). The clause body is a single paragraph unless a mediation variant requires a second one. Mediation provisions carry no internal heading.",
+    "order_rule": "in_clause fragments assemble by ascending order into ONE paragraph (§5.2): base 10, president 20, seat 30, language 40, governing law 50, confidentiality 60, EA opt-out 70, expedited 80, three-arb override 85, document production 90. A replaces_base fragment displaces f_base and heads that same paragraph, absorbing the in_clause sentences after it (§5.3 Variant D). paragraph_before fragments render before the clause paragraph (Variants B, C); paragraph_after fragments render after it (Variant A).",
+    "completeness_gate": "The clause is presented as final (review screen, final screen, copy) only once every currently visible question is answered; no fragment may be emitted with an unfilled mandatory slot (§7.1).",
+    "hidden_answer_rule": "Answers of questions hidden by a later change leave the output but are retained; they are restored if the question becomes visible again (§7.1).",
+    "features": {
+      "live_preview": "Updates on each selection, before moving on; visible update is a segment-level edit (§7.2, visual requirement; internally full recompute + diff is fine).",
+      "copy_to_clipboard": "Only once the completeness gate passes (§7.1).",
+      "output_language_selector": { "options": ["en", "de"], "note": "de output pending until the German pass (§7.4); no silent fallback, show an explicit pending notice." },
+      "explain_clause": "PHASE 2 (§9, decided 30.07.2026): LLM rewrites deferred; 'Explain it like I'm 10' and 'Gen Z' styles when it ships, 'Borat' dropped. No selector in the MVP UI."
+    }
+  },
+
+  "ui_copy": {
+    "entry_screen": {
+      "kicker": { "en": "Start", "de": "pending" },
+      "title": { "en": "Arbitration Agreement Builder", "de": "pending" },
+      "mode_buttons": [
+        { "mode": "advanced", "label": { "en": "Advanced Mode", "de": "pending" } },
+        { "mode": "simple", "label": { "en": "Keep it Simple", "de": "pending" } }
+      ],
+      "status": "settled_spec except the control form: two buttons vs a toggle is open (§8 item 7); prototype keeps two buttons"
+    },
+    "landing_page": {
+      "source": "spec Annex C (approved copy; prose = Payload content). C.7 caveats flagged inline.",
+      "breadcrumb": { "en": "Home / Access to Justice / Arbitration Agreement Builder", "de": "pending" },
+      "hero": {
+        "headline": { "en": "Build a tailored arbitration clause in minutes", "de": "pending" },
+        "subheadline": { "en": "Our intuitive builder creates a clear, effective clause aligned with your commercial goals.", "de": "pending" },
+        "cta": { "en": "Start building", "de": "pending" },
+        "cta_subtext": { "en": "No signup required", "de": "pending" },
+        "status": "settled_spec (Annex C.1)"
+      },
+      "problem_solution": {
+        "headline": { "en": "Don't let a bad clause start a second dispute", "de": "pending" },
+        "body": { "en": "A poorly drafted arbitration agreement is a recipe for trouble. Ambiguities can derail your dispute before it even begins. This leads to costly and time-consuming procedural battles that drain resources and delay resolution. Our builder helps you avoid these common pitfalls by creating a clear, effective, and predictable foundation for your dispute resolution.", "de": "pending" },
+        "status": "settled_spec (Annex C.2)"
+      },
+      "how_it_works": {
+        "headline": { "en": "How it works", "de": "pending" },
+        "subheadline": { "en": "Building your arbitration agreement is straightforward.", "de": "pending" },
+        "steps": [
+          { "n": "01", "title": { "en": "Answer questions", "de": "pending" }, "body": { "en": "Tell the tool what you need.", "de": "pending" } },
+          { "n": "02", "title": { "en": "Get your clause", "de": "pending" }, "body": { "en": "Generated instantly.", "de": "pending" } },
+          { "n": "03", "title": { "en": "Copy & paste", "de": "pending" }, "body": { "en": "Insert it into your contract.", "de": "pending" } }
+        ],
+        "cta": { "en": "Get started", "de": "pending" },
+        "status": "settled_spec (Annex C.3)"
+      },
+      "why_use": {
+        "headline": { "en": "Why use this builder?", "de": "pending" },
+        "benefits": [
+          { "title": { "en": "Prevent costly mistakes", "de": "pending" }, "body": { "en": "Avoid common drafting pitfalls.", "de": "pending" }, "status": "settled_spec (Annex C.4)" },
+          { "title": { "en": "Save time & money", "de": "pending" }, "body": { "en": "A complete clause in minutes.", "de": "pending" }, "status": "settled_spec (Annex C.4)" },
+          { "title": { "en": "Full control & customization", "de": "pending" }, "body": { "en": "Set arbitrators selection, seat, language, expedited rules, and more.", "de": "pending" }, "status": "settled_spec (Annex C.4; suggestion pending: 'arbitrators selection' reads awkwardly, propose 'arbitrator selection')" },
+          { "title": { "en": "Based on ICC Rules", "de": "pending" }, "body": { "en": "Incorporates the rules of the world's leading arbitral institution.", "de": "pending" }, "status": "settled_spec (Annex C.4; §8 item 5: non-endorsement line still missing site-wide, C.7 point 3)" },
+          { "title": { "en": "Privacy focused", "de": "pending" }, "body": { "en": "We don't collect personal data when you use our form.", "de": "pending" }, "status": "signoff_required (C.7 point 1: reconcile with §§7.8/7.9; suggested sharpening: 'Your answers stay in your browser — we never see them.')" }
+        ],
+        "cta": { "en": "Create Your Clause", "de": "pending" }
+      },
+      "faq": {
+        "headline": { "en": "Frequently asked questions", "de": "pending" },
+        "items": [
+          { "q": { "en": "Which arbitration rules does this tool use?", "de": "pending" }, "a": { "en": "Currently, it generates agreements based on the Rules of Arbitration of the International Chamber of Commerce (ICC).", "de": "pending" }, "status": "settled_spec (Annex C.5)" },
+          { "q": { "en": "Is this legal advice?", "de": "pending" }, "a": { "en": "No. It's an automated tool for informational purposes only and does not replace tailored legal counsel.", "de": "pending" }, "status": "settled_spec (Annex C.5)" },
+          { "q": { "en": "Who is this for?", "de": "pending" }, "a": { "en": "Businesses and individuals needing a straightforward ICC arbitration clause. Use \"Simple Version\" for basic needs or \"Advanced Mode\" for more options, but always consider seeking legal advice.", "de": "pending" }, "status": "settled_spec (Annex C.5; note: says \"Simple Version\", the mode button says \"Keep it Simple\": unify at copy review)" },
+          { "q": { "en": "Is the clause legally binding?", "de": "pending" }, "a": { "en": "The tool provides standard wording. For it to be binding, it must be correctly incorporated into a valid contract under the applicable law. Review by legal counsel is recommended.", "de": "pending" }, "status": "settled_spec (Annex C.5)" },
+          { "q": { "en": "What about other rules (VIAC, DIS) or highly custom clauses?", "de": "pending" }, "a": { "en": "This builder is currently ICC-focused. For other rules or bespoke needs, please contact us for tailored advice.", "de": "pending" }, "status": "settled_spec (Annex C.5)" },
+          { "q": { "en": "What happens to my entered information?", "de": "pending" }, "a": { "en": "The tool uses selections in real-time only. We don't permanently store the specific details entered. See our Privacy Policy for general site data practices.", "de": "pending" }, "status": "signoff_required (C.7 point 2: should also state nothing reaches the firm unless the enquiry form is submitted, §7.9)" },
+          { "q": { "en": "What if I'm unsure about an option?", "de": "pending" }, "a": { "en": "Choosing options like the number of arbitrators or the seat has significant legal and cost implications. If unsure, seek professional legal advice before finalizing your agreement.", "de": "pending" }, "status": "settled_spec (Annex C.5)" }
+        ],
+        "cta": { "en": "Start Building Now", "de": "pending" }
+      },
+      "final_cta": {
+        "headline": { "en": "Ready to build your arbitration agreement?", "de": "pending" },
+        "subheadline": { "en": "Create a clear, effective starting point for your contract's dispute resolution. Free, fast, and simple.", "de": "pending" },
+        "cta": { "en": "Start building – Free", "de": "pending" },
+        "secondary_text": { "en": "Have questions or need tailored legal advice?", "de": "pending" },
+        "secondary_cta": { "en": "Schedule consultation", "de": "pending" },
+        "status": "settled_spec (Annex C.6)"
+      }
+    },
+    "flow_buttons": {
+      "back": { "en": "Previous question", "de": "pending" },
+      "back_variant_step1": { "en": "Go Back", "de": "pending" },
+      "next": { "en": "Next question", "de": "pending" },
+      "next_variant_step1": { "en": "Next Question", "de": "pending" },
+      "review": { "en": "Review your clause", "de": "pending" },
+      "status": "assumption (wireframe capitalization kept; unify at build)"
+    },
+    "explanation_ui": {
+      "label": { "en": "Why this question matters", "de": "pending" },
+      "status": "assumption (spec paragraph 7.3 leaves the mechanism open: tooltip, info icon or expandable section; the prototype renders an expandable section under the question title, final form is a site design call)"
+    },
+    "thank_you": {
+      "title": { "en": "Thank you for trying the Arbitration Agreement Builder!", "de": "pending" },
+      "body": { "en": "Your arbitration agreement has been successfully drafted based on your preferences – we hope you won't need it. You can now include it in your contract – at your own risk! – or seek further advice to ensure it aligns with your specific needs and circumstances. If you require additional assistance, get in touch.", "de": "pending" },
+      "cta": { "en": "Schedule a consultation", "de": "pending" },
+      "status": "settled_spec (§6 ✅, punctuation preserved)"
+    }
+  },
+
+  "site_policies": {
+    "analytics": "Funnel milestones only, no content, no session linkage (§7.8, decided 30.07.2026). Site-level; nothing to build in the static builder page itself. Standing README constraint.",
+    "enquiry_prefill": "Enquiry form carries the built clause in a visible, editable, clearly labelled field; only clause text, never answers or mode (§7.9, decided 30.07.2026). Site-level.",
+    "privacy_structure": "Builder page fully static: no runtime database call, no visitor input leaving the browser (§1.3/§1.4)."
+  },
+
+  "open_items": []
+}
